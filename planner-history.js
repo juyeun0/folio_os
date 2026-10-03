@@ -71,6 +71,13 @@
           section.innerHTML=`<div class="day-label">${label} · ${rows.length}건 · ${won(rows.reduce((s,t)=>s+t.amount,0))}</div>${entryForm(kind,day)}<small class="muted">여러 건 추가할 수 있어요 · 수정은 Money에서</small>`;
         }
       });
+      const clothes = card.querySelector('[data-field="outer"]')?.closest('.day-meta');
+      if (clothes) {
+        let anchor = clothes;
+        card.querySelectorAll('.day-section').forEach(section => {
+          if (section.querySelector('[data-transaction-form]')) { anchor.after(section); anchor = section; }
+        });
+      }
       card.querySelectorAll('.add-plan').forEach(button=>{button.classList.remove('add-plan');button.dataset.historyAdd=code;});
     });
     const parent=cards[0]?.parentElement;

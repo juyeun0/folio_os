@@ -35,3 +35,7 @@
 .transaction-form input[type=number]::-webkit-inner-spin-button,.transaction-form input[type=number]::-webkit-outer-spin-button{appearance:none;-webkit-appearance:none;margin:0}
 .week-day .transaction-form{grid-template-columns:repeat(4,minmax(100px,1fr)) auto}
 .week-day .transaction-form input,.week-day .transaction-form select{box-sizing:border-box;height:42px;min-height:42px;margin:0;line-height:normal}
+.week-day .transaction-form{max-width:680px;gap:8px;grid-template-columns:repeat(4,minmax(100px,1fr)) auto}
+.week-day .transaction-form input,.week-day .transaction-form select{height:auto;min-height:0;padding:9px;border:1px solid var(--line);border-radius:8px;background-color:#fffdfa;font:inherit;font-size:11px;line-height:normal}
+.week-day .transaction-form button{font-size:11px}
+.week-day .transaction-form select{appearance:none;-webkit-appearance:none;padding-right:34px;border-radius:11px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none'%3E%3Cpath d='m4 6 4 4 4-4' stroke='%238e7fa3' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 11px center;background-size:14px 14px}
