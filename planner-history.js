@@ -44,7 +44,7 @@
   });
   planFor = day => state.weeklyPlans.filter(plan => plan.date === plus(selected,codes.indexOf(day)));
   const opts = selectedCategory => `<option value="">분류 선택</option>${[...new Set([...categories,selectedCategory].filter(Boolean))].map(c=>`<option value="${esc(c)}" ${c===selectedCategory?'selected':''}>${esc(c)}</option>`).join('')}`;
-  const entryForm = (kind, day) => `<form data-transaction-form="${kind}" data-date="${day}" class="transaction-form"><input name="amount" type="number" min="0.01" step="0.01" placeholder="${kind==='expense'?'지출':'수입'} 금액" required><select name="category">${opts('')}</select><input name="source" placeholder="${kind==='expense'?'지출처':'수입처'}"><input name="item" placeholder="항목"><button type="submit" class="primary-button">기록 추가</button></form>`;
+  const entryForm = (kind, day) => `<form data-transaction-form="${kind}" data-date="${day}" class="transaction-form"><input name="amount" type="number" min="0.01" step="0.01" placeholder="${kind==='expense'?'지출':'수입'} 금액" required><select name="category">${opts('')}</select><input name="source" placeholder="${kind==='expense'?'결제수단':'수입처'}"><input name="item" placeholder="항목"><button type="submit" class="primary-button">기록 추가</button></form>`;
   const weeklyView = views.weekly;
   views.weekly = () => {
     const current = monday(today());
@@ -79,7 +79,7 @@
     const months = new Set(Object.keys(history).map(w=>w.slice(0,7)));
     for(let offset=-4;offset<=14;offset++){const d=date(`${browseMonth}-01`);d.setMonth(d.getMonth()+offset);months.add(key(d).slice(0,7));}
     months.add(browseMonth);
-    const archive=[...months].sort().map(month=>{
+    const archive=[...months].filter(month=>month>='2026-08').sort().map(month=>{
       const start=`${month}-01`, weeks=[];let w=monday(start);if(w<start)w=plus(w,7);
       while(w.slice(0,7)===month){weeks.push(w);w=plus(w,7);}
       return `<details class="week-month"><summary>${month.replace('-','년 ')}월</summary><div class="week-month-list">${weeks.map((w,i)=>`<button type="button" data-select-week="${w}" class="secondary-button ${w===selected?'selected':''}">${i+1}주 · ${w.slice(5)} – ${plus(w,6).slice(5)}${w===current?' · 이번 주':''}</button>`).join('')}</div></details>`;
@@ -90,7 +90,7 @@
   const previousMoney = views.money;
   views.money = () => {
     const old=document.createElement('template');old.innerHTML=previousMoney();
-    const fixed=[...old.content.querySelectorAll('.fixed-expense-card,.fixed-income-card')].map(el=>el.outerHTML).join('');
+    const fixed=[...old.content.querySelectorAll('.fixed-expense-card,.fixed-income-card')].map(el=>el.outerHTML).join('').replaceAll('지출처','결제수단');
     const total=kind=>transactions.filter(t=>t.kind===kind).reduce((s,t)=>s+t.amount,0);
     const form = t => `<form data-edit-transaction="${t.id}" class="transaction-form"><input name="date" type="date" value="${t.date}" required><select name="kind"><option value="expense" ${t.kind==='expense'?'selected':''}>지출</option><option value="income" ${t.kind==='income'?'selected':''}>수입</option></select><input name="amount" type="number" min="0.01" step="0.01" value="${t.amount}" required><select name="category">${opts(t.category)}</select><input name="source" value="${esc(t.source)}" placeholder="지출처 / 수입처"><input name="item" value="${esc(t.item)}" placeholder="항목"><button class="primary-button">저장</button><button type="button" data-cancel-transaction class="secondary-button">취소</button></form>`;
     const rows=[...transactions].sort((a,b)=>b.date.localeCompare(a.date)||(b.createdAt||'').localeCompare(a.createdAt||'')).map(t=>`<article class="money-ledger-row"><span class="ledger-kind ${t.kind}">${t.kind==='expense'?'−':'+'}</span><div class="ledger-description"><strong>${t.kind==='expense'?'지출':'수입'} · ${won(t.amount)} · ${esc(t.item)}</strong><small>사용일 ${t.date} · ${esc(t.source || '출처 미입력')} · ${esc(t.category || '미분류')}</small><small>기록 일시: ${t.createdAt?new Date(t.createdAt).toLocaleString('ko-KR'):'이전 기록 (일시 미상)'}${t.updatedAt?` · 수정 ${new Date(t.updatedAt).toLocaleString('ko-KR')}`:''}</small>${editing===t.id?form(t):''}</div><button class="secondary-button" data-open-transaction="${t.id}">수정</button></article>`).join('');
@@ -108,11 +108,11 @@
       const time=document.querySelector(`[data-plan-time="${day}"]`).value.trim();
       if(time&&!/^([01]?\d|2[0-3]):[0-5]\d$/.test(time)){alert('시간은 24시간 형식으로 입력해주세요. 예: 08:30, 19:30');return;}
       state.weeklyPlans.push({id:Date.now(),day,date:plus(selected,codes.indexOf(day)),text,time,category:document.querySelector(`[data-plan-category="${day}"]`).value,showMonthly:document.querySelector(`[data-show-monthly="${day}"]`).checked});persistPlans();render();return;}
-    const select=event.target.closest('[data-select-week]');if(select){saveWeek();selected=select.dataset.selectWeek;browseMonth=selected.slice(0,7);loadWeek();render();return;}
+    const select=event.target.closest('[data-select-week]');if(select){if(select.dataset.selectWeek<'2026-08-03')return;saveWeek();selected=select.dataset.selectWeek;browseMonth=selected.slice(0,7);loadWeek();render();return;}
     const edit=event.target.closest('[data-open-transaction]');if(edit){editing=edit.dataset.openTransaction;render();}
     if(event.target.closest('[data-cancel-transaction]')){editing=null;render();}
   },true);
-  document.addEventListener('change',event=>{if(event.target.matches('[data-browse-month]')&&event.target.value){browseMonth=event.target.value;render();}});
+  document.addEventListener('change',event=>{if(event.target.matches('[data-browse-month]')&&event.target.value){browseMonth=event.target.value<'2026-08'?'2026-08':event.target.value;render();}});
   document.addEventListener('click',event=>{if(event.target.closest('.habit-check'))saveWeek();});
   document.addEventListener('submit',event=>{
     const form=event.target;
@@ -126,6 +126,15 @@
     write('folio-transactions',transactions);render();
   });
   const previousRender=render;
-  render=()=>{saveWeek();titles.weekly=[`${selected} — ${plus(selected,6)}`,'Weekly'];previousRender();if(state.view==='money')document.querySelectorAll('.fixed-expense-form select[name="category"]').forEach(select=>{select.innerHTML=opts(select.value);});};
+  render=()=>{
+    saveWeek();titles.weekly=[`${selected} — ${plus(selected,6)}`,'Weekly'];previousRender();
+    const monthInput=document.querySelector('[data-browse-month]');if(monthInput)monthInput.min='2026-08';
+    document.querySelectorAll('[data-select-week]').forEach(button=>{button.disabled=button.dataset.selectWeek<'2026-08-03';});
+    if(state.view==='money'){
+      document.querySelectorAll('.fixed-expense-form select[name="category"]').forEach(select=>{select.innerHTML=opts(select.value);});
+      document.querySelectorAll('[data-edit-transaction] input[name="source"]').forEach(input=>{input.placeholder='결제수단 / 수입처';});
+      const chartHeading=document.querySelector('.expense-source-card .card-title');if(chartHeading)chartHeading.textContent='SPENDING BY PAYMENT METHOD';
+    }
+  };
   render();
 })();
