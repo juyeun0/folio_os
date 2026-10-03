@@ -126,7 +126,12 @@
     write('folio-transactions',transactions);render();
   });
   const previousRender=render;
+  // Navigation is a device-local preference, not a cloud data change.
+  const lastViewKey='planner-last-view';
+  const lastView=localStorage.getItem(lastViewKey);
+  if(lastView && Object.hasOwn(views,lastView) && Object.hasOwn(titles,lastView)) state.view=lastView;
   render=()=>{
+    if(localStorage.getItem(lastViewKey)!==state.view)localStorage.setItem(lastViewKey,state.view);
     saveWeek();titles.weekly=[`${selected} — ${plus(selected,6)}`,'Weekly'];previousRender();
     const monthInput=document.querySelector('[data-browse-month]');if(monthInput)monthInput.min='2026-08';
     document.querySelectorAll('[data-select-week]').forEach(button=>{button.disabled=button.dataset.selectWeek<'2026-08-03';});

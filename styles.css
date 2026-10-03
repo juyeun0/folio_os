@@ -31,3 +31,7 @@
 .week-day .transaction-form button{grid-column:auto;white-space:nowrap}
 .category-add-form,.category-add-form label,.category-add-form input,.category-add-form button{font-family:inherit;font-size:13px;font-weight:400}
 .history-week-bar button:disabled{opacity:.4;cursor:not-allowed}
+.transaction-form input[type=number]{appearance:textfield;-moz-appearance:textfield}
+.transaction-form input[type=number]::-webkit-inner-spin-button,.transaction-form input[type=number]::-webkit-outer-spin-button{appearance:none;-webkit-appearance:none;margin:0}
+.week-day .transaction-form{grid-template-columns:repeat(4,minmax(100px,1fr)) auto}
+.week-day .transaction-form input,.week-day .transaction-form select{box-sizing:border-box;height:42px;min-height:42px;margin:0;line-height:normal}
