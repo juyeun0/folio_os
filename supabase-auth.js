@@ -153,7 +153,7 @@
   }
 
   async function loadAppScripts() {
-    for (const src of ['app.js', 'monthly.js', 'weekly-enhancements.js?v=weekly-edit2-20261002']) {
+    for (const src of ['app.js', 'monthly.js', 'weekly-enhancements.js?v=weekly-edit2-20261002', 'planner-history.js?v=1']) {
       await new Promise((resolve, reject) => {
         const script = document.createElement('script');
         script.src = src;
