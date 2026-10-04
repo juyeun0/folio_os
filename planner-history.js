@@ -132,7 +132,10 @@
     if(event.target.closest('[data-cancel-transaction]')){editing=null;render();}
   },true);
   document.addEventListener('change',event=>{if(event.target.matches('[data-browse-month]')&&event.target.value){browseMonth=event.target.value<'2026-08'?'2026-08':event.target.value;render();}});
-  document.addEventListener('click',event=>{if(event.target.closest('.habit-check'))saveWeek();});
+  document.addEventListener('click',event=>{
+    if(event.target.closest('.habit-check,.weather-choice'))saveWeek();
+    if(event.target.closest('.weather-choice'))refreshDaySummaries();
+  });
   document.addEventListener('submit',event=>{
     const form=event.target;
     if(!form.matches('[data-transaction-form],[data-edit-transaction],[data-add-money-category]'))return;
@@ -210,6 +213,7 @@
   render=()=>{
     if(localStorage.getItem(lastViewKey)!==state.view)localStorage.setItem(lastViewKey,state.view);
     saveWeek();titles.weekly=[`${selected} — ${plus(selected,6)}`,'Weekly'];previousRender();
+    if(state.view==='weekly')refreshDaySummaries();
     const monthInput=document.querySelector('[data-browse-month]');if(monthInput)monthInput.min='2026-08';
     document.querySelectorAll('[data-select-week]').forEach(button=>{button.disabled=button.dataset.selectWeek<'2026-08-03';});
     if(state.view==='money'){
