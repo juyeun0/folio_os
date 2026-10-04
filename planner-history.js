@@ -68,7 +68,12 @@
         if(!plan || String(plan.time||'').trim())return;
         row.innerHTML=`<button class="todo-check" data-complete-plan="${plan.id}" aria-pressed="${Boolean(plan.done)}">${plan.done?'✓':'□'}</button><span class="tag ${esc(plan.category)}">${esc(plan.category)}</span><span class="plan-record-text">${esc(plan.text)}</span><button type="button" class="edit-plan-button" data-edit-plan="${plan.id}">수정</button><label class="monthly-item-toggle"><input type="checkbox" data-plan-monthly="${plan.id}" ${plan.showMonthly===false?'':'checked'}> 월간</label><button class="remove-record" data-remove-plan="${plan.id}">×</button>`;
       });
-      card.querySelectorAll('.day-section').forEach(section=>{if(section.querySelector('.day-label')?.textContent.includes('SCHEDULE'))section.querySelectorAll('.monthly-item-toggle').forEach(toggle=>toggle.remove());});
+      card.querySelectorAll('.day-section').forEach(section=>{
+        if(!section.querySelector('.day-label')?.textContent.includes('SCHEDULE'))return;
+        section.classList.add('schedule-section');
+        section.querySelectorAll('.monthly-item-toggle').forEach(toggle=>toggle.remove());
+        section.querySelectorAll('.weekly-record>span:not(.tag)').forEach(text=>text.classList.add('schedule-record-text'));
+      });
       const toggle=card.querySelector('[data-toggle-week-day]'); toggle.setAttribute('aria-expanded',String(open)); toggle.textContent=open?'⌃':'⌄';
       card.querySelectorAll('.day-section').forEach(section=>{
         const label=section.querySelector('.day-label')?.textContent.trim();

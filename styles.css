@@ -56,6 +56,7 @@
 .sleep-trend .sleep-axis-tick{font-size:9px}.sleep-trend .sleep-axis-break{font-size:9px;fill:#9b87bb}
 .sleep-trend circle{r:1px}
 .sleep-trend g circle{r:5px}.trend-legend .wake,.trend-legend .bed{color:#222}
+.schedule-section .weekly-record{justify-content:flex-start}.schedule-section .weekly-record>.todo-check{width:20px;flex:0 0 20px}.schedule-section .weekly-record>b{width:48px;flex:0 0 48px;text-align:left}.schedule-section .weekly-record>.tag{margin-left:0;margin-right:0;flex:none;text-align:left}.schedule-record-text{min-width:0;flex:1;overflow-wrap:anywhere}
 @media(max-width:760px){
  .mobile-nav{display:none!important}.main-content{padding-bottom:40px}.topbar{display:grid;grid-template-columns:32px minmax(0,1fr) auto;gap:10px;align-items:start}.mobile-menu-button{display:block;margin-top:6px;font-size:23px;padding:0;width:32px;height:32px;border-radius:10px;background:var(--lav-bg)}
  body.menu-open{overflow:hidden}body.menu-open .sidebar{display:flex;position:fixed;left:0;top:0;bottom:0;width:min(290px,85vw);padding:24px;z-index:51;background:var(--paper);overflow-y:auto}body.menu-open .mobile-menu-overlay{display:block;position:fixed;inset:0;width:100%;height:100%;background:#25202c66;z-index:50}.mobile-menu-close{display:block;align-self:flex-end;font-size:13px;margin-bottom:14px}.sidebar .eyebrow{margin-top:20px}.nav-item{padding:10px 13px}.sidebar-bottom{padding-top:20px}
