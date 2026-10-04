@@ -53,6 +53,8 @@
 .event-mobile-text{display:none}.calendar .event.is-done .event-mobile-text{text-decoration:line-through;opacity:.65}
 .sleep-trend-card{max-width:760px}.sleep-trend-card .sleep-trend{max-width:680px;margin:0 auto 12px}.sleep-trend-card .card-head{margin-bottom:12px}.sleep-trend-card .sleep-average{padding:14px}.sleep-trend-card .sleep-average strong{font-size:20px;margin:7px 0}
 .trend-legend span{display:flex;align-items:center;gap:6px}.trend-legend span::before{content:'';width:22px;height:2px;background:currentColor;border-radius:2px}
+.sleep-trend .sleep-axis-tick{font-size:9px}.sleep-trend .sleep-axis-break{font-size:9px;fill:#9b87bb}
+.sleep-trend circle{r:1px}
 @media(max-width:760px){
  .mobile-nav{display:none!important}.main-content{padding-bottom:40px}.topbar{display:grid;grid-template-columns:32px minmax(0,1fr) auto;gap:10px;align-items:start}.mobile-menu-button{display:block;margin-top:6px;font-size:23px;padding:0;width:32px;height:32px;border-radius:10px;background:var(--lav-bg)}
  body.menu-open{overflow:hidden}body.menu-open .sidebar{display:flex;position:fixed;left:0;top:0;bottom:0;width:min(290px,85vw);padding:24px;z-index:51;background:var(--paper);overflow-y:auto}body.menu-open .mobile-menu-overlay{display:block;position:fixed;inset:0;width:100%;height:100%;background:#25202c66;z-index:50}.mobile-menu-close{display:block;align-self:flex-end;font-size:13px;margin-bottom:14px}.sidebar .eyebrow{margin-top:20px}.nav-item{padding:10px 13px}.sidebar-bottom{padding-top:20px}
