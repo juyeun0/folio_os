@@ -1,4 +1,10 @@
 (() => {
+  const escapeText=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const mobileText=value=>String(value??'').trim().split(/\s+/).flatMap(word=>{
+    const chars=Array.from(word),limit=/[가-힣ㄱ-ㅎㅏ-ㅣ]/.test(word)?4:5,lines=[];
+    for(let i=0;i<chars.length;i+=limit)lines.push(escapeText(chars.slice(i,i+limit).join('')));
+    return lines;
+  }).join('<br>');
   const dateForWeekday = (weekday) => {
     const today = new Date(2026, 9, 1);
     const monday = new Date(today);
@@ -39,7 +45,7 @@
       const today = new Date();
       const isToday = dateKey === isoDate(today);
       const incomeEvents = currentMonth ? fixedIncomeItems.map((item) => `<div class="event fixed-income-event">↗ ${item.item} · ₩${Number(String(item.amount).replace(/[^0-9]/g, '')).toLocaleString()}<small>고정 수입 예정</small></div>`).join('') : '';
-      return `<div class="date-cell ${currentMonth ? '' : 'dim'} ${isToday ? 'today' : ''}"><span class="date-number">${date.getDate()}</span>${items.map((item) => `<div class="event ${item.category === 'work' ? '' : item.category === 'family' ? 'green' : 'blue'}">${item.text}</div>`).join('')}${incomeEvents}</div>`;
+      return `<div class="date-cell ${currentMonth ? '' : 'dim'} ${isToday ? 'today' : ''}"><span class="date-number">${date.getDate()}</span>${items.map((item) => `<div class="event ${item.category === 'fixed' ? 'fixed' : item.category === 'work' ? '' : item.category === 'family' ? 'green' : 'blue'} ${item.done?'is-done':''}"><span class="event-text">${escapeText(item.text).replace(/\s+/g,'\n')}</span><span class="event-mobile-text" aria-hidden="true">${mobileText(item.text)}</span></div>`).join('')}${incomeEvents}</div>`;
     }).join('');
     const monthTitle = new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(visibleMonth).toUpperCase();
     const atStart = year === minimumMonth.getFullYear() && month === minimumMonth.getMonth();
