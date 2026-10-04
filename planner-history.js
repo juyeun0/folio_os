@@ -62,6 +62,12 @@
       const name = card.querySelector('.week-day-name'); name.textContent=code;
       if(day===today()) name.insertAdjacentHTML('beforeend',' <span class="today-badge">TODAY</span>');
       const open=day===today(); card.classList.toggle('collapsed',!open);
+      card.querySelectorAll('.weekly-record').forEach(row => {
+        const id=row.querySelector('[data-complete-plan]')?.dataset.completePlan;
+        const plan=state.weeklyPlans.find(p=>String(p.id)===id);
+        if(!plan || String(plan.time||'').trim())return;
+        row.innerHTML=`<button class="todo-check" data-complete-plan="${plan.id}" aria-pressed="${Boolean(plan.done)}">${plan.done?'✓':'□'}</button><span class="tag ${esc(plan.category)}">${esc(plan.category)}</span><span class="plan-record-text">${esc(plan.text)}</span><button type="button" class="edit-plan-button" data-edit-plan="${plan.id}">수정</button><label class="monthly-item-toggle"><input type="checkbox" data-plan-monthly="${plan.id}" ${plan.showMonthly===false?'':'checked'}> 월간</label><button class="remove-record" data-remove-plan="${plan.id}">×</button>`;
+      });
       const toggle=card.querySelector('[data-toggle-week-day]'); toggle.setAttribute('aria-expanded',String(open)); toggle.textContent=open?'⌃':'⌄';
       card.querySelectorAll('.day-section').forEach(section=>{
         const label=section.querySelector('.day-label')?.textContent.trim();
@@ -132,6 +138,64 @@
     else transactions.push({id:crypto.randomUUID(),...fields,kind:form.dataset.transactionForm,date:form.dataset.date,createdAt:new Date().toISOString()});
     write('folio-transactions',transactions);render();
   });
+  let sleepWeek=monday(today());
+  const memos=read('folio-memos',[]);
+  let memoId=null;
+  const draft=()=>read('folio-memo-draft',{title:'',text:''});
+  titles.sleep=['WEEKLY SLEEP','Sleep'];titles.memos=['MY NOTEBOOK','메모장'];
+  [['sleep','☾','Sleep','Sleep'],['memos','▤','메모장','Memo']].forEach(([view,icon,label,mobile])=>{
+    [['.nav-list','nav-item',label],['.mobile-nav','mobile-nav-item',mobile]].forEach(([selector,className,text])=>{
+      const nav=document.querySelector(selector);if(!nav)return;
+      const button=document.createElement('button');button.className=className;button.dataset.view=view;button.innerHTML=`<span>${icon}</span>${text}`;nav.append(button);
+    });
+  });
+  const minutes=value=>{const match=String(value||'').trim().match(/^([01]?\d|2[0-3]):([0-5]\d)$/);return match?Number(match[1])*60+Number(match[2]):null;};
+  const fieldsFor=day=>history[monday(day)]?.fields?.[codes[(date(day).getDay()+6)%7]]||{};
+  views.sleep=()=>{
+    const rows=codes.map((code,index)=>{const day=plus(sleepWeek,index),fields=fieldsFor(day);
+      const bed=minutes(fields.sleep),wake=minutes(fields.wake);
+      const duration=bed!==null&&wake!==null?((wake-bed+1440)%1440)/60:null;
+      return {day,code,bed,wake,duration};});
+    const durations=rows.filter(r=>r.duration!==null),average=durations.length?durations.reduce((s,r)=>s+r.duration,0)/durations.length:null;
+    const weeks=[...new Set([...Object.keys(history),sleepWeek,monday(today())])].sort().reverse();
+    const timeLabel=value=>`${String(Math.floor(value/60)).padStart(2,'0')}:${String(value%60).padStart(2,'0')}`;
+    return `<p class="view-intro">Weekly에 적은 기상·취침 시간이 주별로 쌓여요. 같은 요일 칸에 적은 전날 밤 취침과 당일 아침 기상을 한 쌍으로 계산해요. 자정 이후 취침도 지원해요.</p><div class="history-week-bar"><button class="secondary-button" data-sleep-week="${plus(sleepWeek,-7)}">← 이전 주</button><strong>${sleepWeek} – ${plus(sleepWeek,6)}</strong><button class="secondary-button" data-sleep-week="${plus(sleepWeek,7)}">다음 주 →</button><button class="secondary-button" data-sleep-week="${monday(today())}">이번 주</button></div><section class="paper-card sleep-chart"><div class="card-head"><span class="card-title">기상 / 취침 · 24시간</span><span class="muted">${average===null?'수면 시간 기록 대기':`평균 수면 ${average.toFixed(1)}시간 · ${durations.length}일 기록`}</span></div><div class="sleep-legend"><span>☀ 기상</span><span>☾ 취침</span></div><div class="sleep-axis"><span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>24:00</span></div>${rows.map(r=>`<div class="sleep-row"><div class="sleep-date">${r.code}<small>${r.day.slice(5)}</small></div><div class="sleep-track" role="img" aria-label="${r.day} 기상 ${r.wake===null?'미기록':timeLabel(r.wake)}, 취침 ${r.bed===null?'미기록':timeLabel(r.bed)}">${r.wake===null?'':`<span class="sleep-point wake-point" style="left:${r.wake/1440*100}%" title="기상 ${timeLabel(r.wake)}">☀</span>`}${r.bed===null?'':`<span class="sleep-point bed-point" style="left:${r.bed/1440*100}%" title="취침 ${timeLabel(r.bed)}">☾</span>`}</div><div class="sleep-values"><span>기상 ${r.wake===null?'—':timeLabel(r.wake)} · 취침 ${r.bed===null?'—':timeLabel(r.bed)}</span><small>${r.duration===null?'수면 시간: 같은 날의 기상·취침 기록 필요':`수면 ${r.duration.toFixed(1)}시간`}</small></div></div>`).join('')}<p class="muted">시간은 24시간 형식(예: 07:30, 23:00)으로 적어주세요. 비어 있거나 형식이 다른 기록은 그래프에서 제외해요.</p></section><section class="paper-card week-archive"><div class="card-title">주간 수면 보관함</div><div class="week-month-list">${weeks.map(w=>`<button class="secondary-button" data-sleep-week="${w}">${w} – ${plus(w,6)}</button>`).join('')}</div></section>`;
+  };
+  views.memos=()=>{
+    const memo=memos.find(m=>m.id===memoId)||draft();
+    return `<p class="view-intro">생각이나 자료를 자유롭게 적고, 저장한 메모를 다시 열어 수정해요. 작성 중인 내용도 자동으로 보관돼요.</p><div class="memo-layout"><section class="paper-card"><div class="card-head"><span class="card-title">저장한 메모 · ${memos.length}개</span><button class="secondary-button" data-new-memo>새 메모</button></div><div class="memo-list">${memos.slice().sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt)).map(m=>`<button class="memo-list-item ${m.id===memoId?'selected':''}" data-open-memo="${m.id}"><strong>${esc(m.title||'제목 없는 메모')}</strong><small>${new Date(m.updatedAt).toLocaleString('ko-KR')}</small><span>${esc(m.text.slice(0,80))}</span></button>`).join('')||'<p class="muted">첫 메모를 작성해보세요.</p>'}</div></section><section class="paper-card"><form data-memo-form><input class="memo-title-input" name="title" placeholder="메모 제목" value="${esc(memo.title)}" maxlength="200" aria-label="메모 제목"><textarea class="memo-text-input" name="text" placeholder="편하게 적어보세요…" aria-label="메모 내용">${esc(memo.text)}</textarea><div class="card-head"><span class="muted" id="memo-save-status">${memoId?'저장된 메모':'새 메모 · 임시 보관'}</span><button class="primary-button">메모 저장</button></div></form></section></div>`;
+  };
+  document.addEventListener('click',event=>{
+    const week=event.target.closest('[data-sleep-week]');if(week){sleepWeek=week.dataset.sleepWeek;render();}
+    const open=event.target.closest('[data-open-memo]');if(open){memoId=open.dataset.openMemo;render();}
+    if(event.target.closest('[data-new-memo]')){memoId=null;render();}
+  });
+  document.addEventListener('input',event=>{
+    const form=event.target.closest('[data-memo-form]');if(!form)return;
+    const data=new FormData(form),values={title:String(data.get('title')),text:String(data.get('text'))};
+    const memo=memos.find(m=>m.id===memoId);
+    if(memo){Object.assign(memo,values,{updatedAt:new Date().toISOString()});write('folio-memos',memos);}else write('folio-memo-draft',values);
+    document.querySelector('#memo-save-status').textContent='자동 저장됨';
+  });
+  document.addEventListener('submit',event=>{
+    if(!event.target.matches('[data-memo-form]'))return;event.preventDefault();
+    const data=new FormData(event.target),values={title:String(data.get('title')).trim(),text:String(data.get('text'))};
+    if(!values.title&&!values.text.trim())return;
+    const memo=memos.find(m=>m.id===memoId),now=new Date().toISOString();
+    if(memo)Object.assign(memo,values,{updatedAt:now});else {memoId=crypto.randomUUID();memos.push({id:memoId,...values,createdAt:now,updatedAt:now});write('folio-memo-draft',{title:'',text:''});}
+    write('folio-memos',memos);render();
+  });
+  const groupMoneyDays=()=>{
+    const rows=[...document.querySelectorAll('.money-ledger-row')];if(!rows.length)return;
+    const sorted=transactions.slice().sort((a,b)=>b.date.localeCompare(a.date)||(b.createdAt||'').localeCompare(a.createdAt||''));
+    const container=rows[0].parentElement,groups=new Map();
+    sorted.forEach((t,index)=>{if(!groups.has(t.date))groups.set(t.date,[]);groups.get(t.date).push({transaction:t,row:rows[index]});});
+    groups.forEach((items,day)=>{
+      const expense=items.filter(i=>i.transaction.kind==='expense').reduce((s,i)=>s+i.transaction.amount,0),income=items.filter(i=>i.transaction.kind==='income').reduce((s,i)=>s+i.transaction.amount,0);
+      const section=document.createElement('section');section.className='money-date-group';section.innerHTML=`<div class="money-date-heading"><strong>${day} · ${['일','월','화','수','목','금','토'][date(day).getDay()]}요일</strong><span>지출 ${won(expense)} · 수입 ${won(income)}</span></div>`;
+      items.forEach(i=>section.append(i.row));container.append(section);
+    });
+  };
   const previousRender=render;
   // Navigation is a device-local preference, not a cloud data change.
   const lastViewKey='planner-last-view';
@@ -143,6 +207,7 @@
     const monthInput=document.querySelector('[data-browse-month]');if(monthInput)monthInput.min='2026-08';
     document.querySelectorAll('[data-select-week]').forEach(button=>{button.disabled=button.dataset.selectWeek<'2026-08-03';});
     if(state.view==='money'){
+      groupMoneyDays();
       document.querySelectorAll('.fixed-expense-form select[name="category"]').forEach(select=>{select.innerHTML=opts(select.value);});
       document.querySelectorAll('[data-edit-transaction] input[name="source"]').forEach(input=>{input.placeholder='결제수단 / 수입처';});
       const chartHeading=document.querySelector('.expense-source-card .card-title');if(chartHeading)chartHeading.textContent='SPENDING BY PAYMENT METHOD';
