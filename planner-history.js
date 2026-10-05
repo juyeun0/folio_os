@@ -221,6 +221,20 @@
       document.querySelectorAll('.fixed-expense-form select[name="category"]').forEach(select=>{select.innerHTML=opts(select.value);});
       document.querySelectorAll('[data-edit-transaction] input[name="source"]').forEach(input=>{input.placeholder='결제수단 / 수입처';});
       const chartHeading=document.querySelector('.expense-source-card .card-title');if(chartHeading)chartHeading.textContent='SPENDING BY PAYMENT METHOD';
+      const chart=document.querySelector('.expense-source-card');
+      if(chart){
+        const now=new Date(),lastDay=new Date(now.getFullYear(),now.getMonth()+1,0).getDate();
+        const groups=new Map();
+        (state.fixedExpenses||[]).forEach(item=>{
+          const due=Number(item.dueDay);if(!Number.isInteger(due)||due<1||due>31)return;
+          const day=Math.min(due,lastDay);if(!groups.has(day))groups.set(day,[]);groups.get(day).push(item);
+        });
+        const fixedAmount=item=>Number(String(item.amount||'').replace(/[^0-9.]/g,''))||0;
+        const total=[...groups.values()].flat().reduce((sum,item)=>sum+fixedAmount(item),0);
+        const summary=document.createElement('section');summary.className='paper-card fixed-payment-summary';
+        summary.innerHTML=`<div class="card-head"><span class="card-title">고정 지출 캘린더</span><span class="muted">${now.getFullYear()}년 ${now.getMonth()+1}월</span></div><div class="fixed-payment-total"><span>월 고정 지출 총액</span><strong>${won(total)}</strong><small>예정 금액 · 실제 지출 합계와는 별도</small></div><div class="fixed-payment-dates">${[...groups].sort(([a],[b])=>a-b).map(([day,items])=>`<article class="fixed-payment-date"><div class="fixed-payment-day"><strong>${day}</strong><span>일</span></div><div class="fixed-payment-details"><div class="fixed-payment-day-total"><strong>${won(items.reduce((sum,item)=>sum+fixedAmount(item),0))}</strong><small>${items.length}건</small></div>${items.map(item=>`<div class="fixed-payment-item"><span>${esc(item.item||'고정 지출')}</span><strong>${won(fixedAmount(item))}</strong></div>`).join('')}</div></article>`).join('')||'<p class="muted">아래 고정 지출 양식에 등록하면 날짜별로 모여요.</p>'}</div><p class="muted">매달 반복 · 해당 날짜가 없는 달은 말일에 표시해요.</p>`;
+        const layout=document.createElement('div');layout.className='payment-fixed-layout';chart.before(layout);layout.append(chart,summary);
+      }
     }
   };
   render();
