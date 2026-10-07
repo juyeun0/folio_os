@@ -12,7 +12,18 @@
   let selected = monday(today()), activeCurrent = selected, browseMonth = selected.slice(0,7), editing = null;
   const history = read('folio-week-history', {});
   const transactions = read('folio-transactions', []);
-  const categories = read('folio-money-categories', ['주거비','식비','카페비','생필품','꾸밈비']);
+  const reservedFixed=['주거비','통신비','보험료','헌금','고정비'];
+  const categories = read('folio-money-categories', ['식비','카페비','생필품','꾸밈비']);
+  const fixedCategories=read('folio-fixed-categories',reservedFixed);
+  if(!localStorage.getItem('folio-category-split')){
+    categories.splice(0,categories.length,...categories.filter(c=>!reservedFixed.includes(c)));
+    write('folio-money-categories',categories);write('folio-fixed-categories',fixedCategories);localStorage.setItem('folio-category-split','1');
+  }
+  window.addEventListener('folio-categories-updated',event=>{
+    const {scope,before,after}=event.detail;
+    const list=scope==='fixed'?fixedCategories:categories;list.splice(0,list.length,...read(scope==='fixed'?'folio-fixed-categories':'folio-money-categories',[]));
+    if(before&&after){transactions.forEach(t=>{if(t.category===before&&Boolean(t.isFixed)===(scope==='fixed'))t.category=after;});write('folio-transactions',transactions);}
+  });
   const amount = value => Number(String(value || '').replace(/,/g,'')) || 0;
   const won = value => `₩${Number(value).toLocaleString('ko-KR')}`;
   if (!localStorage.getItem('folio-history-migrated')) {
@@ -43,7 +54,10 @@
     if (values.length) { const box=document.createElement('div');box.className='day-summary';box.innerHTML=values.map(v=>`<span>${esc(v)}</span>`).join('');head.insertBefore(box,head.querySelector('.week-date')); }
   });
   planFor = day => state.weeklyPlans.filter(plan => plan.date === plus(selected,codes.indexOf(day)));
-  const opts = selectedCategory => `<option value="">분류 선택</option>${[...new Set([...categories,selectedCategory].filter(Boolean))].map(c=>`<option value="${esc(c)}" ${c===selectedCategory?'selected':''}>${esc(c)}</option>`).join('')}`;
+  const opts = (selectedCategory,fixed=false) => {
+    const list=fixed?fixedCategories:categories;
+    return `<option value="">분류 선택</option>${selectedCategory&&!list.includes(selectedCategory)?`<option value="${esc(selectedCategory)}" selected disabled>${esc(selectedCategory)} (이전 분류)</option>`:''}${list.map(c=>`<option value="${esc(c)}" ${c===selectedCategory?'selected':''}>${esc(c)}</option>`).join('')}`;
+  };
   const entryForm = (kind, day) => `<form data-transaction-form="${kind}" data-date="${day}" class="transaction-form"><input name="amount" type="number" min="0.01" step="0.01" placeholder="${kind==='expense'?'지출':'수입'} 금액" required><select name="category">${opts('')}</select><input name="source" placeholder="${kind==='expense'?'결제수단':'수입처'}"><input name="item" placeholder="항목"><button type="submit" class="primary-button">기록 추가</button></form>`;
   const weeklyView = views.weekly;
   views.weekly = () => {
@@ -220,7 +234,7 @@
     document.querySelectorAll('[data-select-week]').forEach(button=>{button.disabled=button.dataset.selectWeek<'2026-08-03';});
     if(state.view==='money'){
       groupMoneyDays();
-      document.querySelectorAll('.fixed-expense-form select[name="category"]').forEach(select=>{select.innerHTML=opts(select.value);});
+      document.querySelectorAll('.fixed-expense-form select[name="category"]').forEach(select=>{select.innerHTML=opts(select.value,select.closest('form').id==='fixed-expense-form');});
       document.querySelectorAll('[data-edit-transaction] input[name="source"]').forEach(input=>{input.placeholder='결제수단 / 수입처';});
       const chartHeading=document.querySelector('.expense-source-card .card-title');if(chartHeading)chartHeading.textContent='SPENDING BY PAYMENT METHOD';
       const chart=document.querySelector('.expense-source-card');

@@ -154,7 +154,7 @@
 
   async function loadAppScripts() {
     const preferredView=localStorage.getItem('planner-last-view');
-    for (const src of ['app.js', 'monthly.js', 'weekly-enhancements.js?v=weekly-edit2-20261002', 'planner-history.js?v=1', 'ui-polish.js?v=1', 'schedule.js?v=1']) {
+    for (const src of ['app.js', 'monthly.js', 'weekly-enhancements.js?v=weekly-edit2-20261002', 'planner-history.js?v=1', 'ui-polish.js?v=1', 'schedule.js?v=1', 'money-categories.js?v=1']) {
       await new Promise((resolve, reject) => {
         const script = document.createElement('script');
         script.src = src;
