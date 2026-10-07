@@ -126,7 +126,9 @@
       const text=document.querySelector(`[data-plan-text="${day}"]`).value.trim();if(!text)return;
       const time=document.querySelector(`[data-plan-time="${day}"]`).value.trim();
       if(time&&!/^([01]?\d|2[0-3]):[0-5]\d$/.test(time)){alert('시간은 24시간 형식으로 입력해주세요. 예: 08:30, 19:30');return;}
-      state.weeklyPlans.push({id:Date.now(),day,date:plus(selected,codes.indexOf(day)),text,time,category:document.querySelector(`[data-plan-category="${day}"]`).value,showMonthly:document.querySelector(`[data-show-monthly="${day}"]`).checked});persistPlans();render();return;}
+      const endTime=document.querySelector(`[data-plan-end="${day}"]`)?.value||'';
+      if(endTime&&(!time||(!/^([01]?\d|2[0-3]):[0-5]\d$/.test(endTime)&&endTime!=='24:00')||timeValue(endTime)<=timeValue(time))){alert('종료 시간은 시작 시간보다 늦게 입력해주세요.');return;}
+      state.weeklyPlans.push({id:Date.now(),day,date:plus(selected,codes.indexOf(day)),text,time,endTime,arch:Boolean(document.querySelector(`[data-plan-arch="${day}"]`)?.checked),category:document.querySelector(`[data-plan-category="${day}"]`).value,showMonthly:document.querySelector(`[data-show-monthly="${day}"]`).checked});persistPlans();render();return;}
     const select=event.target.closest('[data-select-week]');if(select){if(select.dataset.selectWeek<'2026-08-03')return;saveWeek();selected=select.dataset.selectWeek;browseMonth=selected.slice(0,7);loadWeek();render();return;}
     const edit=event.target.closest('[data-open-transaction]');if(edit){editing=edit.dataset.openTransaction;render();}
     if(event.target.closest('[data-cancel-transaction]')){editing=null;render();}
@@ -142,7 +144,7 @@
     event.preventDefault();const data=new FormData(form);
     if(form.matches('[data-add-money-category]')){const c=String(data.get('category')).trim();if(c&&!categories.includes(c)){categories.push(c);write('folio-money-categories',categories);}render();return;}
     const value=amount(data.get('amount'));if(value<=0||!Number.isFinite(value))return;
-    const fields={amount:value,category:String(data.get('category')||''),source:String(data.get('source')||'').trim(),item:String(data.get('item')||'').trim()};
+    const fields={amount:value,category:String(data.get('category')||''),source:String(data.get('source')||'').trim(),item:String(data.get('item')||'').trim(),isFixed:data.get('isFixed')==='on'};
     if(form.dataset.editTransaction){const t=transactions.find(t=>t.id===form.dataset.editTransaction);if(t)Object.assign(t,fields,{date:String(data.get('date')),kind:String(data.get('kind')),updatedAt:new Date().toISOString()});editing=null;}
     else transactions.push({id:crypto.randomUUID(),...fields,kind:form.dataset.transactionForm,date:form.dataset.date,createdAt:new Date().toISOString()});
     write('folio-transactions',transactions);render();
