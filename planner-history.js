@@ -233,6 +233,14 @@
         });
         const fixedAmount=item=>Number(String(item.amount||'').replace(/[^0-9.]/g,''))||0;
         const total=[...groups.values()].flat().reduce((sum,item)=>sum+fixedAmount(item),0);
+        const categoryTotals=new Map();
+        [...groups.values()].flat().forEach(item=>{
+          const category=String(item.category||'').trim()||'미분류';
+          categoryTotals.set(category,(categoryTotals.get(category)||0)+fixedAmount(item));
+        });
+        const categorySummary=document.createElement('section');categorySummary.className='fixed-category-summary';
+        categorySummary.innerHTML=`<div class="card-head"><span class="card-title">분류별 고정 지출</span><span class="muted">월 예정 금액</span></div>${categoryTotals.size?`<table class="fixed-category-table"><thead><tr><th scope="col">분류</th><th scope="col">금액</th></tr></thead><tbody>${[...categoryTotals].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0],'ko')).map(([category,amount])=>`<tr><th scope="row">${esc(category)}</th><td>${won(amount)}</td></tr>`).join('')}</tbody><tfoot><tr><th scope="row">합계</th><td>${won(total)}</td></tr></tfoot></table>`:'<p class="muted">고정 지출을 등록하면 분류별 금액이 여기에 모여요.</p>'}<p class="muted">실제 소비 비중에는 더하지 않는 고정 지출 예정액이에요.</p>`;
+        chart.append(categorySummary);
         const summary=document.createElement('section');summary.className='paper-card fixed-payment-summary';
         summary.innerHTML=`<div class="card-head"><span class="card-title">고정 지출 캘린더</span><span class="muted">${now.getFullYear()}년 ${now.getMonth()+1}월</span></div><div class="fixed-payment-total"><span>월 고정 지출 총액</span><strong>${won(total)}</strong><small>예정 금액 · 실제 지출 합계와는 별도</small></div><div class="fixed-payment-dates">${[...groups].sort(([a],[b])=>a-b).map(([day,items])=>`<article class="fixed-payment-date"><div class="fixed-payment-day"><strong>${day}일</strong><span>${['일','월','화','수','목','금','토'][new Date(now.getFullYear(),now.getMonth(),day).getDay()]}</span></div><div class="fixed-payment-details"><div class="fixed-payment-day-total"><strong>${won(items.reduce((sum,item)=>sum+fixedAmount(item),0))}</strong><small>${items.length}건</small></div>${items.map(item=>`<div class="fixed-payment-item"><span>${esc(item.item||'고정 지출')}</span><strong>${won(fixedAmount(item))}</strong></div>`).join('')}</div></article>`).join('')||'<p class="muted">아래 고정 지출 양식에 등록하면 날짜별로 모여요.</p>'}</div><p class="muted">매달 반복 · 해당 날짜가 없는 달은 말일에 표시해요.</p>`;
         const layout=document.createElement('div');layout.className='payment-fixed-layout';chart.before(layout);layout.append(chart,summary);
