@@ -135,6 +135,23 @@
   views.todos=()=>`<p class="view-intro">날짜별 투두만 모아요. 시간 있는 일정은 제외해요.</p>${[...new Set(state.weeklyPlans.filter(p=>!String(p.time||'').trim()).map(p=>p.date))].filter(Boolean).sort().map(day=>`<section class="paper-card"><div class="card-title task-date-highlight">${day} · ${['일','월','화','수','목','금','토'][date(day).getDay()]}요일</div>${state.weeklyPlans.filter(p=>p.date===day&&!String(p.time||'').trim()).map(p=>`<div class="weekly-record ${p.done?'is-done':''}"><button class="todo-check" data-complete-plan="${p.id}" aria-pressed="${Boolean(p.done)}">${p.done?'✓':'□'}</button><span class="plan-record-text">${esc(p.text)}</span><button class="remove-record" data-remove-plan="${p.id}">×</button></div>`).join('')||'<p class="muted">모두 완료했어요.</p>'}</section>`).join('')}`;
   // Window capture runs before historical document handlers, preventing duplicate additions.
   window.addEventListener('click',event=>{
+    const monthlyPlan=event.target.closest('[data-open-weekly-plan]');
+    if(monthlyPlan){
+      const plan=state.weeklyPlans.find(p=>String(p.id)===monthlyPlan.dataset.openWeeklyPlan);
+      if(!plan?.date)return;
+      event.preventDefault();event.stopImmediatePropagation();
+      saveWeek();selected=monday(plan.date);browseMonth=selected.slice(0,7);loadWeek();state.view='weekly';render();
+      const target=[...document.querySelectorAll('.week-day')].find(card=>card.dataset.date===plan.date);
+      if(target){
+        document.querySelectorAll('.week-day').forEach(card=>{
+          const open=card===target;card.classList.toggle('collapsed',!open);
+          const toggle=card.querySelector('[data-toggle-week-day]');if(toggle){toggle.setAttribute('aria-expanded',String(open));toggle.textContent=open?'⌃':'⌄';}
+        });
+        const control=[...target.querySelectorAll('[data-complete-plan]')].find(button=>button.dataset.completePlan===String(plan.id));
+        const row=control?.closest('.weekly-record')||target;row.classList.add('monthly-plan-target');row.tabIndex=-1;row.focus({preventScroll:true});row.scrollIntoView({behavior:'smooth',block:'center'});
+      }
+      return;
+    }
     const add=event.target.closest('[data-history-add]');
     if(add){event.preventDefault();event.stopImmediatePropagation();const day=add.dataset.historyAdd;
       const text=document.querySelector(`[data-plan-text="${day}"]`).value.trim();if(!text)return;
