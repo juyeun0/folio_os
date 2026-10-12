@@ -27,6 +27,7 @@
   });
   localStorage.setItem('folio-weekly-plans', JSON.stringify(savedPlans));
   state.weeklyPlans = savedPlans;
+  const monthlyIntentions=JSON.parse(localStorage.getItem('folio-monthly-intentions')||'{}');
 
   views.monthly = () => {
     const year = visibleMonth.getFullYear();
@@ -50,8 +51,17 @@
     const monthTitle = new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(visibleMonth).toUpperCase();
     const atStart = year === minimumMonth.getFullYear() && month === minimumMonth.getMonth();
     const atEnd = year === maximumMonth.getFullYear() && month === maximumMonth.getMonth();
-    return `<section class="paper-card monthly-wide"><div class="card-head"><span class="card-title">${monthTitle}</span><div class="month-controls"><button type="button" class="month-nav-button" data-month-shift="-1" aria-label="이전 달" ${atStart ? 'disabled' : ''}>‹</button><button type="button" class="month-nav-button" data-month-shift="1" aria-label="다음 달" ${atEnd ? 'disabled' : ''}>›</button></div></div><div class="calendar" style="--month-weeks:${cellCount / 7}">${headings.map((day) => `<div class="day-name">${day}</div>`).join('')}${dates}</div></section>`;
+    const intentionKey=`${year}-${String(month+1).padStart(2,'0')}`;
+    const intentionMarkup=`<section class="monthly-intention"><div class="monthly-intention-heading"><label for="monthly-intention-text">${month+1}월의 각오 · 포부</label><span class="muted" id="monthly-intention-status" aria-live="polite">자동 저장</span></div><textarea id="monthly-intention-text" data-intention-month="${intentionKey}" rows="3" placeholder="이번 달, 어떤 마음으로 보내고 싶나요?">${escapeText(monthlyIntentions[intentionKey]||'')}</textarea></section>`;
+    return `<section class="paper-card monthly-wide"><div class="card-head"><span class="card-title">${monthTitle}</span><div class="month-controls"><button type="button" class="month-nav-button" data-month-shift="-1" aria-label="이전 달" ${atStart ? 'disabled' : ''}>‹</button><button type="button" class="month-nav-button" data-month-shift="1" aria-label="다음 달" ${atEnd ? 'disabled' : ''}>›</button></div></div>${intentionMarkup}<div class="calendar" style="--month-weeks:${cellCount / 7}">${headings.map((day) => `<div class="day-name">${day}</div>`).join('')}${dates}</div></section>`;
   };
+
+  document.addEventListener('input',event=>{
+    if(!event.target.matches('[data-intention-month]'))return;
+    monthlyIntentions[event.target.dataset.intentionMonth]=event.target.value;
+    localStorage.setItem('folio-monthly-intentions',JSON.stringify(monthlyIntentions));
+    const status=document.querySelector('#monthly-intention-status');if(status)status.textContent='저장됨 ✓';
+  });
 
   document.addEventListener('click', (event) => {
     const control = event.target.closest('[data-month-shift]');
